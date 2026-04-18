@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS Eye — Digital Twin Command Center</title>
+    <meta name="description" content="Adaptive Event Ground Intelligence System — Real-time 3D crowd dynamics visualization for 50,000+ capacity concert venues">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader-content">
+            <div class="loader-ring">
+                <div class="ring-segment"></div>
+                <div class="ring-segment"></div>
+                <div class="ring-segment"></div>
+            </div>
+            <div class="loader-text">
+                <span class="aegis-logo-load">AEGIS</span>
+                <span class="aegis-sub">DIGITAL TWIN INITIALIZING</span>
+                <div class="load-progress">
+                    <div class="load-bar" id="load-bar"></div>
+                </div>
+                <span class="load-status" id="load-status">Loading sensor mesh...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" class="hidden">
+        <!-- Top Bar -->
+        <header id="top-bar">
+            <div class="top-left">
+                <div class="logo-group">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 32 32" fill="none">
+                            <circle cx="16" cy="16" r="14" stroke="url(#logoGrad)" stroke-width="2"/>
+                            <circle cx="16" cy="16" r="8" stroke="url(#logoGrad)" stroke-width="1.5" opacity="0.6"/>
+                            <circle cx="16" cy="16" r="3" fill="url(#logoGrad)"/>
+                            <line x1="16" y1="2" x2="16" y2="8" stroke="url(#logoGrad)" stroke-width="1.5"/>
+                            <line x1="16" y1="24" x2="16" y2="30" stroke="url(#logoGrad)" stroke-width="1.5"/>
+                            <line x1="2" y1="16" x2="8" y2="16" stroke="url(#logoGrad)" stroke-width="1.5"/>
+                            <line x1="24" y1="16" x2="30" y2="16" stroke="url(#logoGrad)" stroke-width="1.5"/>
+                            <defs>
+                                <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32">
+                                    <stop offset="0%" stop-color="#00F0FF"/>
+                                    <stop offset="100%" stop-color="#8B5CF6"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <span class="logo-title">AEGIS EYE</span>
+                        <span class="logo-subtitle">DIGITAL TWIN COMMAND CENTER</span>
+                    </div>
+                </div>
+            </div>
+            <div class="top-center">
+                <div class="event-info">
+                    <span class="event-name">STARFIELD ARENA — MAIN EVENT</span>
+                    <span class="event-capacity" id="event-capacity">0 / 52,000</span>
+                </div>
+            </div>
+            <div class="top-right">
+                <div class="live-indicator" id="live-indicator">
+                    <span class="live-dot"></span>
+                    <span>LIVE</span>
+                </div>
+                <div class="clock" id="clock">00:00:00</div>
+                <div class="phase-badge" id="phase-badge">PRE-EVENT</div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div id="main-content">
+            <!-- Left Sidebar -->
+            <aside id="left-sidebar">
+                <!-- Sector Status -->
+                <div class="panel" id="sector-panel">
+                    <div class="panel-header">
+                        <span class="panel-icon">◉</span>
+                        <span>GATE STATUS</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="gate-item" id="gate-north">
+                            <div class="gate-label">
+                                <span class="gate-dot" style="background:#00F0FF"></span>
+                                North Gate
+                            </div>
+                            <div class="gate-bar-wrap">
+                                <div class="gate-bar" style="width:0%"></div>
+                            </div>
+                            <span class="gate-pct">0%</span>
+                        </div>
+                        <div class="gate-item" id="gate-east">
+                            <div class="gate-label">
+                                <span class="gate-dot" style="background:#8B5CF6"></span>
+                                East Gate
+                            </div>
+                            <div class="gate-bar-wrap">
+                                <div class="gate-bar" style="width:0%"></div>
+                            </div>
+                            <span class="gate-pct">0%</span>
+                        </div>
+                        <div class="gate-item" id="gate-south">
+                            <div class="gate-label">
+                                <span class="gate-dot" style="background:#10B981"></span>
+                                South Gate
+                            </div>
+                            <div class="gate-bar-wrap">
+                                <div class="gate-bar" style="width:0%"></div>
+                            </div>
+                            <span class="gate-pct">0%</span>
+                        </div>
+                        <div class="gate-item" id="gate-west">
+                            <div class="gate-label">
+                                <span class="gate-dot" style="background:#F59E0B"></span>
+                                West Gate
+                            </div>
+                            <div class="gate-bar-wrap">
+                                <div class="gate-bar" style="width:0%"></div>
+                            </div>
+                            <span class="gate-pct">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Amenity Dashboard -->
+                <div class="panel" id="amenity-panel">
+                    <div class="panel-header">
+                        <span class="panel-icon">◈</span>
+                        <span>AMENITIES</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="amenity-item">
+                            <span class="amenity-icon">🚻</span>
+                            <div class="amenity-info">
+                                <span class="amenity-name">Restrooms</span>
+                                <span class="amenity-stat" id="restroom-wait">0.0 min avg</span>
+                            </div>
+                            <div class="amenity-mini-bar">
+                                <div class="mini-bar-fill" id="restroom-bar" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div class="amenity-item">
+                            <span class="amenity-icon">🍔</span>
+                            <div class="amenity-info">
+                                <span class="amenity-name">Food & Bev</span>
+                                <span class="amenity-stat" id="food-wait">0.0 min avg</span>
+                            </div>
+                            <div class="amenity-mini-bar">
+                                <div class="mini-bar-fill" id="food-bar" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div class="amenity-item">
+                            <span class="amenity-icon">👕</span>
+                            <div class="amenity-info">
+                                <span class="amenity-name">Merchandise</span>
+                                <span class="amenity-stat" id="merch-wait">0.0 min avg</span>
+                            </div>
+                            <div class="amenity-mini-bar">
+                                <div class="mini-bar-fill" id="merch-bar" style="width:0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Throughput -->
+                <div class="panel" id="throughput-panel">
+                    <div class="panel-header">
+                        <span class="panel-icon">◆</span>
+                        <span>THROUGHPUT</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="throughput-grid">
+                            <div class="tp-item">
+                                <span class="tp-value" id="tp-entry">0</span>
+                                <span class="tp-label">Entry/min</span>
+                            </div>
+                            <div class="tp-item">
+                                <span class="tp-value" id="tp-exit">0</span>
+                                <span class="tp-label">Exit/min</span>
+                            </div>
+                            <div class="tp-item">
+                                <span class="tp-value" id="tp-density">0.0</span>
+                                <span class="tp-label">Avg Density</span>
+                            </div>
+                            <div class="tp-item">
+                                <span class="tp-value" id="tp-flow">0.0</span>
+                                <span class="tp-label">Flow Rate</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 3D Viewport -->
+            <main id="viewport-container">
+                <div id="viewport-3d">
+                    <canvas id="three-canvas"></canvas>
+                </div>
+                <!-- Viewport Controls -->
+                <div id="viewport-controls">
+                    <div class="view-modes">
+                        <button class="view-btn active" id="btn-heatmap" data-mode="heatmap">
+                            <span class="btn-icon">🔥</span> Heatmap
+                        </button>
+                        <button class="view-btn" id="btn-flow" data-mode="flow">
+                            <span class="btn-icon">🌊</span> Flow
+                        </button>
+                        <button class="view-btn" id="btn-queues" data-mode="queues">
+                            <span class="btn-icon">📊</span> Queues
+                        </button>
+                        <button class="view-btn" id="btn-prediction" data-mode="prediction">
+                            <span class="btn-icon">🔮</span> Predict
+                        </button>
+                        <button class="view-btn" id="btn-emergency" data-mode="emergency">
+                            <span class="btn-icon">🚨</span> Emergency
+                        </button>
+                    </div>
+                    <div class="camera-controls">
+                        <button class="cam-btn" id="cam-overview" title="Overview">⬡</button>
+                        <button class="cam-btn" id="cam-entry" title="Entry Gates">⬢</button>
+                        <button class="cam-btn" id="cam-pit" title="Standing Pit">◎</button>
+                        <button class="cam-btn" id="cam-aerial" title="Aerial">△</button>
+                    </div>
+                </div>
+                <!-- Timeline -->
+                <div id="timeline-container">
+                    <div class="timeline-label" id="timeline-label">T-90 min</div>
+                    <div class="timeline-bar">
+                        <input type="range" id="timeline-slider" min="0" max="100" value="10" step="0.5">
+                        <div class="timeline-markers">
+                            <span class="tm" style="left:0%">Gates Open</span>
+                            <span class="tm" style="left:33%">Peak Entry</span>
+                            <span class="tm" style="left:50%">Show Start</span>
+                            <span class="tm" style="left:85%">Show End</span>
+                            <span class="tm" style="left:100%">Cleared</span>
+                        </div>
+                    </div>
+                    <div class="timeline-controls">
+                        <button class="tl-btn" id="tl-play">▶</button>
+                        <button class="tl-btn" id="tl-speed">1×</button>
+                        <button class="tl-btn" id="tl-surge" title="Simulate Crowd Surge">⚡ SURGE</button>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Sidebar -->
+            <aside id="right-sidebar">
+                <!-- Alert Feed -->
+                <div class="panel" id="alert-panel">
+                    <div class="panel-header">
+                        <span class="panel-icon pulse-icon">⚠</span>
+                        <span>ALERTS</span>
+                        <span class="alert-count" id="alert-count">0</span>
+                    </div>
+                    <div class="panel-body" id="alert-feed">
+                        <div class="alert-empty">No active alerts</div>
+                    </div>
+                </div>
+
+                <!-- RL Agent Status -->
+                <div class="panel" id="rl-panel">
+                    <div class="panel-header">
+                        <span class="panel-icon">🧠</span>
+                        <span>RL AGENT</span>
+                        <span class="rl-status-badge" id="rl-status">ACTIVE</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="rl-metrics">
+                            <div class="rl-metric">
+                                <span class="rl-label">Confidence</span>
+                                <span class="rl-value" id="rl-confidence">98.2%</span>
+                            </div>
+                            <div class="rl-metric">
+                                <span class="rl-label">Actions/min</span>
+                                <span class="rl-value" id="rl-actions">0</span>
+                            </div>
+                            <div class="rl-metric">
+                                <span class="rl-label">Reward</span>
+                                <span class="rl-value" id="rl-reward">0.00</span>
+                            </div>
+                            <div class="rl-metric">
+                                <span class="rl-label">Policy</span>
+                                <span class="rl-value" id="rl-policy">OPTIMIZE</span>
+                            </div>
+                        </div>
+                        <div class="rl-actions-log" id="rl-actions-log">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sensor Health -->
+                <div class="panel" id="sensor-panel">
+                    <div class="panel-header">
+                        <span class="panel-icon">📡</span>
+                        <span>SENSORS</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="sensor-grid">
+                            <div class="sensor-item online">
+                                <span class="sensor-dot"></span>
+                                <span>LiDAR (24/24)</span>
+                            </div>
+                            <div class="sensor-item online">
+                                <span class="sensor-dot"></span>
+                                <span>Thermal (16/16)</span>
+                            </div>
+                            <div class="sensor-item online">
+                                <span class="sensor-dot"></span>
+                                <span>Pressure (512/512)</span>
+                            </div>
+                            <div class="sensor-item online">
+                                <span class="sensor-dot"></span>
+                                <span>Radar (8/8)</span>
+                            </div>
+                            <div class="sensor-item online">
+                                <span class="sensor-dot"></span>
+                                <span>Ultrasonic (96/96)</span>
+                            </div>
+                            <div class="sensor-item online">
+                                <span class="sensor-dot"></span>
+                                <span>Env/IoT (200/200)</span>
+                            </div>
+                        </div>
+                        <div class="sensor-uptime">
+                            <span>System Uptime</span>
+                            <span class="uptime-value" id="uptime">99.97%</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
